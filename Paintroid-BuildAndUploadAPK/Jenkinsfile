@@ -1,0 +1,22 @@
+#!groovy
+apk_file = 'Paintroid/build/outputs/apk/Paintroid-debug.apk'
+
+node('NoDevice') {
+    stage('Build') {
+        // https://issues.jenkins-ci.org/browse/JENKINS-32529
+        git branch: BRANCH, url: REPO
+
+        // TODO assembleDebugAndroidTest fails
+        //sh './gradlew -Pjenkins clean assembleDebug assembleDebugAndroidTest'
+        sh './gradlew -Pjenkins clean assembleDebug'
+        archiveArtifacts apk_file
+    }
+        
+    stage('Deploy') {
+        ssh_key = '~/.ssh/file-downloads'
+        remote_user = 'file-download'
+        remote = 'files.catrob.at'
+        dest_file = 'www/pocketpaint_nightly.apk'
+        sh "scp -i $ssh_key $apk_file ${remote_user}@${remote}:${dest_file}"
+    }
+}
